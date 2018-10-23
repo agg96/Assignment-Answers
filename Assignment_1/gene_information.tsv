@@ -1,0 +1,6 @@
+Gene_ID	Gene_name	mutant_phenotype
+AT1G69120	ap1	"meristems replace first and second whorl"
+AT4G36920	ap2	"first whorl carpels, second whorl stamens"
+AT3G54340	ap3	"second whorl sepals, third whorl carpels"
+AT1G30950	ufo	"second whorl sepaloidy, third whorl missing or carpeloid"
+AT5G20240	pi	"second whorl sepals, third whorl carpels"
