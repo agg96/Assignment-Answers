@@ -82,9 +82,11 @@ end
     no_protein_synonyms.push protein_name_matrix[k][0][0]
 end
 
-# Then, we can see the protein interactions with other proteins from the list
+# Then, we can see the protein interactions with other proteins
 
 (0..no_protein_synonyms.size-1).each do |l|
+    require 'net/http'
+    require 'json'
     address = URI("http://togows.org/entry/ebi-uniprot/#{no_protein_synonyms[l]}/dr.json")
     res = Net::HTTP.get_response(address)
     data = JSON.parse(res.body)
@@ -108,41 +110,30 @@ end
 
 #Second level of interactions
 protein_interaction.each do |n|
-    address = URI("http://www.ebi.ac.uk/Tools/webservices/psicquic/intact/webservices/current/search/interactor/#{n}")
+    address = URI("http://www.ebi.ac.uk/Tools/webservices/psicquic/intact/webservices/current/search/query/#{n}?format=tab25")
     res_intact2 = Net::HTTP.get_response(address)
     body_intact2 = res_intact2.body
     intact2 = body_intact2.split("\n")
     interaction = []
-    (0..intact2.size-1).each do |o|
-        columns2 = intact2[o].split("\t")
-        protein_A = columns2[0].sub(/uniprotkb:/,"")
-        protein_B = columns2[1].sub(/uniprotkb:/,"")
-        interaction.push protein_A    
-        interaction.push protein_B   
+    if intact2
+      intact2.each do |o|
+        columns2 = o.split("\t")
+        if columns2[9]=~/taxid:3702/ && column[10]=~/taxid:3702/ && (column[6]=~/MI:(0006|0007|0047|0055|0065|0084|0096|0402|0676|1356|0071|0112|0663)/)
+          ids = []
+          ids.push(columns2[0].split(":")[1])
+          ids.push(columns2[1].split(":")[1])
+          if ids[0] != prot && !interaction.include?(ids[0])
+            interaction.push(ids[0])
+          elsif ids[1] != prot && !interaction.include?(ids[1])
+            interaction.push(ids[1])
+          end 
+        end
+      end
     end
-    interaction = interaction.uniq
-    interaction_level2.push interaction
 end
 
-#Third level of interactions
-interaction_level2.each do |array|
-    interaction= []
-    array.each do |p|
-        address = URI("http://www.ebi.ac.uk/Tools/webservices/psicquic/intact/webservices/current/search/interactor/#{p}")
-        res_intact3 = Net::HTTP.get_response(address)
-        body_intact3 = res_intact3.body
-        intact3 = body_intact3.split("\n")
-        (0..intact3.size-1).each do |q|
-            columns3 = intact3[q].split("\t")
-            protein_A = columns3[0].sub(/uniprotkb:/,"")
-            protein_B = columns3[1].sub(/uniprotkb:/,"")
-            interaction.push protein_A    
-            interaction.push protein_B   
-        end
-        interaction = interaction.uniq  
-    end
-    interaction_level3.push interaction  
-end
+################################
+#MAKE CHANGES TO INCLUDE THE FILTERS
 
 # Now, we have a group of arrays composed by the main protein and its interactors of second and third level inside the last matrix
 
@@ -171,12 +162,12 @@ end
     network = []
     position.push s
     intact_genes.push gene_interaction[s]
-    (0..interaction_level3.size-1).each do |t|
-        relation = interaction_level3[s] & interaction_level3[t] 
+    (0..interaction_level3.size-1).each do |r|
+        relation = interaction_level3[s] & interaction_level3[r] 
         if relation != []
-            position.push t
-            intact_genes.push gene_interaction[t]
-            network.push objects_interaction[t]
+            position.push r
+            intact_genes.push gene_interaction[r]
+            network.push objects_interaction[r]
         end
     end
     position = position.uniq
@@ -191,7 +182,7 @@ end
 final_networks = networks_object
 (0..networks_object.size-1).each do |x|
         final_networks[x] = InteractionNetwork.new(
-        :interaction_IDs => networks_object[x],
+        :genes_ID => networks_object[x],
         )
 end
 
@@ -214,4 +205,4 @@ yes = 0
 end
 no_interactions = no_gene_interaction.size + no
 puts "There are #{yes} interaction networks"
-puts "There are #{no_interactions} genes which do not interact"
+puts "There are #{no_interactions} genes which do not interact with other genes from the list"
