@@ -106,10 +106,10 @@ gene_names.each do |gene_ID|
     if /exon_id/.match(qual_string)
         unless /[A-Z]/.match(position_string)
           #Transformation of the string [1..250] to [1,250]
-          pos_aux = position.tr('complement()','')
-          pos_aux = pos_aux.split("..")
-          init_position = pos_aux[0].to_i #Initial position of the exon
-          final_position =pos_aux[1].to_i #Final position of the exon
+          location = position.tr('complement()','')
+          location = location.split("..")
+          init_position = location[0].to_i #Initial position of the exon
+          final_position = location[1].to_i #Final position of the exon
           #Now here, if the exon is in the minus strand, the sequence we look for have to be the complementary one to CTTCTT
           #We could have done this defining which is the complementary sequence, but we can use the next code as well.
           if /complement/.match(position_string) 
